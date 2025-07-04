@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Runner 3D</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+        }
+
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Главное меню */
+        #mainMenu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 50px;
+            border-radius: 20px;
+            border: 3px solid #0ff;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.5);
+        }
+
+        #mainMenu h1 {
+            font-size: 60px;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            background: linear-gradient(45deg, #0ff, #f0f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 20px rgba(0, 255, 255, 0.8); }
+            50% { text-shadow: 0 0 40px rgba(255, 0, 255, 0.8); }
+        }
+
+        .menuButton {
+            display: block;
+            width: 300px;
+            margin: 20px auto;
+            padding: 20px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(45deg, #0080ff, #00ffff);
+            border: none;
+            border-radius: 50px;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menuButton:before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+        }
+
+        .menuButton:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.8);
+        }
+
+        .menuButton:hover:before {
+            width: 300px;
+            height: 100px;
+        }
+
+        /* Экран статистики */
+        #statsScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            max-height: 80vh;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            border: 3px solid #0ff;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.5);
+            display: none;
+            z-index: 100;
+        }
+
+        #statsScreen h2 {
+            font-size: 36px;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #0ff;
+            text-transform: uppercase;
+        }
+
+        .statsTable {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .statsTable tr {
+            height: 40px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .statsTable td {
+            padding: 10px;
+            font-size: 18px;
+        }
+
+        .statsTable .rank {
+            color: #f0f;
+            font-weight: bold;
+            width: 50px;
+        }
+
+        .statsTable .score {
+            color: #0ff;
+            font-weight: bold;
+        }
+
+        .statsTable .date {
+            color: #888;
+            text-align: right;
+        }
+
+        /* HUD */
+        #gameHUD {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            display: none;
+            z-index: 50;
+        }
+
+        .hudElement {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 2px solid #0ff;
+            display: inline-block;
+            margin: 5px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        #score {
+            color: #0ff;
+            font-size: 28px;
+        }
+
+        #phase {
+            color: #f0f;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        /* Экран конца игры */
+        #gameOverScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 50px;
+            border-radius: 20px;
+            border: 3px solid #f00;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.5);
+            display: none;
+            z-index: 100;
+        }
+
+        #gameOverScreen h2 {
+            font-size: 48px;
+            color: #f00;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        #finalScore {
+            font-size: 36px;
+            color: #0ff;
+            margin: 20px 0;
+        }
+
+        /* Мобильные контролы */
+        .mobileControls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            z-index: 50;
+        }
+
+        .controlBtn {
+            width: 80px;
+            height: 80px;
+            margin: 0 20px;
+            background: rgba(0, 255, 255, 0.2);
+            border: 3px solid #0ff;
+            border-radius: 50%;
+            color: #0ff;
+            font-size: 30px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-block;
+            line-height: 74px;
+            text-align: center;
+            user-select: none;
+        }
+
+        .controlBtn:active {
+            background: rgba(0, 255, 255, 0.5);
+            transform: scale(0.95);
+        }
+
+        /* Индикатор туннеля */
+        #tunnelWarning {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            color: #f00;
+            text-transform: uppercase;
+            font-weight: bold;
+            display: none;
+            z-index: 60;
+            animation: blink 0.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Загрузочный экран */
+        #loadingScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        .loader {
+            width: 100px;
+            height: 100px;
+            border: 5px solid #0ff;
+            border-top: 5px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Загрузочный экран -->
+    <div id="loadingScreen">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Canvas для Three.js -->
+    <div id="gameCanvas"></div>
+
+    <!-- Главное меню -->
+    <div id="mainMenu">
+        <h1>Space Runner 3D</h1>
+        <button class="menuButton" onclick="game.startGame()">СТАРТ</button>
+        <button class="menuButton" onclick="game.showStats()">СТАТИСТИКА</button>
+    </div>
+
+    <!-- Экран статистики -->
+    <div id="statsScreen">
+        <h2>Топ 10 Результатов</h2>
+        <table class="statsTable" id="statsTable">
+            <tbody id="statsBody"></tbody>
+        </table>
+        <button class="menuButton" onclick="game.hideStats()">НАЗАД</button>
+    </div>
+
+    <!-- HUD -->
+    <div id="gameHUD">
+        <div class="hudElement" id="score">Счёт: 0</div>
+        <div class="hudElement" id="phase">Фаза: Астероиды</div>
+    </div>
+
+    <!-- Экран конца игры -->
+    <div id="gameOverScreen">
+        <h2>Игра Окончена!</h2>
+        <div id="finalScore">Счёт: 0</div>
+        <button class="menuButton" onclick="game.backToMenu()">В МЕНЮ</button>
+    </div>
+
+    <!-- Предупреждение о туннелях -->
+    <div id="tunnelWarning">ВЫБЕРИТЕ ТУННЕЛЬ!</div>
+
+    <!-- Мобильные контролы -->
+    <div class="mobileControls" id="mobileControls">
+        <div class="controlBtn" id="leftBtn">◀</div>
+        <div class="controlBtn" id="rightBtn">▶</div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="game.js"></script>
+</body>
+
+</html>
